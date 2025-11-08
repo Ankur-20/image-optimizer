@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- Set default light mode, script will check localStorage -->
+<html lang="en" class="light"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Image Optimizer</title>
+    
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- 3. JSZip (for zipping files) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- 4. GSAP (for animations) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- 5. Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- 
+      Tailwind Configuration
+      We use this to set up dark mode, custom fonts, and disable 
+      the preflight 'ring' styles that interfere with the checkboxes.
+    -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable 'dark:' classes
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                },
+            },
+            corePlugins: {
+                ringColor: false, // Disables default ring color
+                ringOffsetColor: false,
+                ringOffsetWidth: false,
+                ringOpacity: false,
+                ringWidth: false,
+            },
+        }
+    </script>
+    
+    <!--
+      Theme Loader Script:
+      This runs *before* the page loads to prevent "flash of wrong theme" (FOUT).
+    -->
+    <script>
+        try {
+            const theme = localStorage.getItem('theme');
+            const root = document.documentElement;
+            if (theme === 'dark') {
+                root.classList.add('dark');
+                root.classList.remove('light');
+            } else {
+                root.classList.add('light'); // Default to light
+                root.classList.remove('dark');
+            }
+        } catch (e) {
+            console.error('Could not set theme from localStorage:', e);
+            document.documentElement.classList.add('light'); // Safe default
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4 sm:p-8 font-sans">
+
+    <!-- Main Application Card -->
+    <div class="max-w-4xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- Left Panel: Upload & File List -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            <!-- Header with Theme Toggle -->
+            <div class="flex justify-between items-center mb-1">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-display">Image Optimizer</h1>
+                
+                <!-- Theme Toggle Button -->
+                <button
+                    role="switch"
+                    aria-checked="false"
+                    id="theme-toggle"
+                    title="Switch to Dark Mode"
+                    class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+                           transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                           dark:focus:ring-offset-gray-800
+                           bg-sky-400
+                           overflow-hidden"
+                >
+                    <span class="sr-only">Toggle dark mode</span>
+                    <!-- Stars (hidden in light mode) -->
+                    <span aria-hidden="true" class="absolute inset-0 transition-opacity duration-300 opacity-0" id="theme-stars">
+                        <span class="absolute top-1.5 left-2 w-0.5 h-0.5 bg-white rounded-full"></span>
+                        <span class="absolute top-3.5 left-1 w-1 h-1 bg-white rounded-full"></span>
+                        <span class="absolute top-2 left-3.5 w-0.5 h-0.5 bg-white rounded-full"></span>
+                    </span>
+                    <!-- Slider Handle (Sun/Moon) -->
+                    <span
+                        aria-hidden="true"
+                        id="theme-slider"
+                        class="pointer-events-none inline-flex h-6 w-6 transform items-center justify-center rounded-full 
+                               shadow-lg ring-0 transition duration-300 ease-in-out
+                               translate-x-0 bg-yellow-400"
+                    >
+                        <!-- Moon (hidden in light mode) -->
+                        <span id="theme-icon-moon" class="absolute transition-opacity duration-200 ease-in-out opacity-0">
+                            <i data-lucide="moon" class="h-4 w-4 text-indigo-900"></i>
+                        </span>
+                        <!-- Sun (visible in light mode) -->
+                        <span id="theme-icon-sun" class="absolute transition-opacity duration-200 ease-in-out opacity-100">
+                            <i data-lucide="sun" class="h-4 w-4 text-white"></i>
+                        </span>
+                    </span>
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">Compress, resize, and convert your images instantly.</p>
+
+            <!-- Dropzone -->
+            <form id="dropzone" class="relative flex flex-col items-center justify-center w-full h-48 border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center cursor-pointer transition-colors duration-200 hover:border-blue-500 hover:bg-gray-50 dark:hover:border-blue-400 dark:hover:bg-gray-700">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i data-lucide="upload-cloud" class="w-10 h-10 mb-3 text-gray-400 dark:text-gray-500"></i>
+                    <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Drag & drop</span> images here</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">or</p>
+                    <button type="button" id="browse-btn" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-300 dark:hover:bg-gray-500">
+                        Browse Files
+                    </button>
+                </div>
+                <input id="file-input" type="file" multiple accept="image/png, image/jpeg, image/webp" class="hidden">
+            </form>
+
+            <!-- File List Header -->
+            <div class="flex justify-between items-center mt-6 mb-2">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 font-display">File Queue</h2>
+                <div class="flex space-x-2" id="file-list-controls">
+                    <!-- Controls will be injected by JS -->
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div id="file-list" class="file-list-container flex-grow h-48 max-h-64 overflow-y-auto space-y-2 p-1">
+                <!-- Placeholder -->
+                <div id="file-list-placeholder" class="h-full flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500 pt-10">
+                    <i data-lucide="image-off" class="w-12 h-12 mx-auto"></i>
+                    <p class="mt-2 text-sm">No files uploaded</p>
+                </div>
+                <!-- File items will be injected here by JS -->
+            </div>
+        </div>
+
+        <!-- Right Panel: Settings & Download -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 bg-gray-50 dark:bg-gray-700/60 flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 font-display">Optimization Settings</h2>
+                
+                <!-- Format Setting -->
+                <div class="mb-4">
+                    <label for="format" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Convert to Format</label>
+                    <select id="format" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400 dark:focus:border-blue-400">
+                        <option value="webp" selected>WebP (Recommended)</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="png">PNG (Lossless)</option>
+                    </select>
+                </div>
+
+                <!-- Quality Setting -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="quality" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quality</label>
+                        <span id="quality-value" class="text-sm font-medium text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full dark:bg-gray-500 dark:text-white">0.80</span>
+                    </div>
+                    <input id="quality" type="range" min="0.1" max="1.0" step="0.05" value="0.8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-600 disabled:opacity-50">
+                </div>
+
+                <!-- Resize Settings -->
+                <div class="flex gap-4 mb-4">
+                    <div class="w-1/2">
+                        <label for="width" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Width (px)</label>
+                        <input type="number" id="width" min="1" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400 dark:focus:border-blue-400" placeholder="Auto">
+                    </div>
+                    <div class="w-1/2">
+                        <label for="height" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Height (px)</label>
+                        <input type="number" id="height" min="1" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400 dark:focus:border-blue-400" placeholder="Auto">
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-4">Leave one blank to maintain aspect ratio. Leave both blank to keep original size.</p>
+
+            </div>
+
+            <!-- Action Area: Process Button & Download -->
+            <div class="mt-8" id="action-area">
+                <!-- Process Button -->
+                <button id="process-btn" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-500 relative overflow-hidden" disabled>
+                    <span id="process-btn-text" class="transition-opacity duration-300">Optimize All</span>
+                    
+                    <!-- Progress Bar Container -->
+                    <div id="progress-container" class="absolute inset-0 bg-blue-800 flex items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
+                        <div id="progress-bar" class="absolute left-0 top-0 bottom-0 bg-blue-500 transition-all duration-300 ease-linear" style="width: 0%;"></div>
+                        <span id="progress-text" class="relative z-10 text-sm font-medium">0%</span>
+                    </div>
+                </button>
+
+                <!-- Post-Process Area (for errors, clear button, and download) -->
+                <div id="post-process-area" class="mt-3">
+                    <!-- JS will inject content here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script src="script.js" defer></script>
+
+</body>
+</html>

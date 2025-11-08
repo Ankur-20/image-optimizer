@@ -1,0 +1,54 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
+
+/* Apply fonts via Tailwind config (using body/h1 as fallbacks) */
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Custom scrollbar for the file list */
+.file-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+.file-list-container::-webkit-scrollbar-track {
+    /* @apply bg-gray-100 dark:bg-gray-700 rounded-full; */
+    background-color: #f3f4f6;
+    border-radius: 9999px;
+}
+.dark .file-list-container::-webkit-scrollbar-track {
+    background-color: #374151;
+}
+
+.file-list-container::-webkit-scrollbar-thumb {
+    /* @apply bg-gray-300 dark:bg-gray-500 rounded-full; */
+    background-color: #d1d5db;
+    border-radius: 9999px;
+}
+.dark .file-list-container::-webkit-scrollbar-thumb {
+    background-color: #6b7280;
+}
+
+.file-list-container::-webkit-scrollbar-thumb:hover {
+    /* @apply bg-gray-400 dark:bg-gray-400; */
+    background-color: #9ca3af;
+}
+.dark .file-list-container::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+}
+
+/* Custom Checkbox 
+  Replaces: @apply focus:ring-0 focus:ring-offset-0;
+  This is to override browser defaults, especially since the
+  Tailwind config disables ring plugins.
+*/
+input[type="checkbox"]:focus {
+    box-shadow: none;
+}
+
+/* Tweak for range input in dark mode */
+.dark input[type="range"]::-webkit-slider-thumb {
+    background: #D1D5DB; /* gray-300 */
+}
