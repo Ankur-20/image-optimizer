@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         postProcessArea: document.getElementById('post-process-area'),
         
+        // NEW: Add estimated-size element
+        estimatedSize: document.getElementById('estimated-size'),
+        
         themeToggle: document.getElementById('theme-toggle'),
         themeSlider: document.getElementById('theme-slider'),
         themeStars: document.getElementById('theme-stars'),
@@ -56,6 +59,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- Helper Functions ---
+
+    /**
+     * Debounce function to limit how often a function is called.
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 
     /**
      * Formats bytes into a human-readable string (KB, MB).
@@ -215,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         render();
+        updateEstimatedSize(); // Update estimate on new files
     }
 
     /**
@@ -235,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             render();
         }
+        updateEstimatedSize(); // Update estimate on file remove
     }
 
     /**
@@ -249,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.pendingFiles = [];
         state.selectedFiles.clear();
         setAppStatus('idle');
+        updateEstimatedSize(); // Update estimate on clear queue
     }
 
     /**
@@ -261,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.selectedFiles.add(id);
         }
         render();
+        updateEstimatedSize(); // Update estimate on selection change
     }
     
     /**
@@ -271,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.selectedFiles.add(f.id);
         });
         render();
+        updateEstimatedSize(); // Update estimate on selection change
     }
 
     /**
@@ -279,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearSelection() {
         state.selectedFiles.clear();
         render();
+        updateEstimatedSize(); // Update estimate on selection change
     }
 
     /**
@@ -297,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         state.pendingFiles = filesToKeep;
         setAppStatus('idle'); // Resets download/error state
+        updateEstimatedSize(); // Update estimate
     }
     
     /**
@@ -311,6 +336,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // These functions update the DOM based on the current state
 
     /**
+     * NEW: Asynchronously updates the estimated file size display.
+     */
+    async function updateEstimatedSize() {
+        const settings = {
+            format: dom.formatSelect.value,
+            quality: parseFloat(dom.qualitySlider.value),
+            width: dom.widthInput.value ? parseInt(dom.widthInput.value) : null,
+            height: dom.heightInput.value ? parseInt(dom.heightInput.value) : null,
+        };
+
+        if (settings.format === 'png') {
+            dom.estimatedSize.textContent = 'Lossless';
+            dom.estimatedSize.title = 'PNG is lossless, quality slider does not apply. Size depends on resize.';
+            return;
+        }
+
+        const filesToEstimate = state.selectedFiles.size > 0
+            ? state.pendingFiles.filter(f => state.selectedFiles.has(f.id)) // <-- Removed "&& f.status === 'pending'"
+            : state.pendingFiles.filter(f => f.status === 'pending');
+
+        if (filesToEstimate.length === 0) {
+            dom.estimatedSize.textContent = '~ 0 KB';
+            dom.estimatedSize.title = 'Add files to see a size estimate.';
+            return;
+        }
+
+        const sampleFile = filesToEstimate[0];
+        const totalOriginalSize = filesToEstimate.reduce((acc, f) => acc + f.size, 0);
+
+        try {
+            // Use processImage to get the compressed blob of the sample file
+            const { blob: estimatedBlob } = await processImage(sampleFile.file, settings);
+            
+            if (sampleFile.size === 0) { // Avoid divide by zero
+                    dom.estimatedSize.textContent = '~ 0 KB';
+                    return;
+            }
+
+            const compressionRatio = estimatedBlob.size / sampleFile.size;
+            const estimatedTotalSize = totalOriginalSize * compressionRatio;
+
+            dom.estimatedSize.textContent = `~ ${formatBytes(estimatedTotalSize)}`;
+            dom.estimatedSize.title = `Estimated output size: ~${formatBytes(estimatedTotalSize)}\nOriginal size: ${formatBytes(totalOriginalSize)}`;
+
+        } catch (err) {
+            console.error("Error updating size estimate:", err);
+            dom.estimatedSize.textContent = 'Error';
+            dom.estimatedSize.title = 'Could not calculate estimate.';
+        }
+    }
+
+    /**
      * The main render function. Calls all sub-renderers.
      */
     function render() {
@@ -321,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Ensure all icons are created
         if (window.lucide) {
-            lucide.createIcons();
+            window.lucide.createIcons();
         }
     }
 
@@ -343,9 +420,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = document.createElement('div');
             item.id = file.id;
             item.className = `flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/80 rounded-lg transition-all duration-200
-                                     ${file.status === 'error' ? 'bg-red-50 dark:bg-red-900/30' : ''}
-                                     ${isSelected ? 'ring-2 ring-blue-500' : ''}
-                                     cursor-pointer`;
+                                ${file.status === 'error' ? 'bg-red-50 dark:bg-red-900/30' : ''}
+                                ${isSelected ? 'ring-2 ring-blue-500' : ''}
+                                cursor-pointer`;
             
             // Add click event for selection
             item.dataset.action = 'toggle-select';
@@ -456,26 +533,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderProcessButton() {
         const { appStatus, selectedFiles, pendingFiles } = state;
         const isProcessing = appStatus === 'processing';
+        
+        // *** MODIFIED LOGIC ***
         const hasPendingFiles = pendingFiles.some(f => f.status === 'pending');
+        const hasSelectedFiles = selectedFiles.size > 0;
+        // We can process if there are pending files OR if files are selected (for re-processing)
+        const canProcess = hasPendingFiles || hasSelectedFiles; 
         
         // Set button text
         if (isProcessing) {
-            dom.processBtnText.textContent = 'Processing...'; // This is hidden, but good for state
-        } else if (selectedFiles.size > 0) {
+            dom.processBtnText.textContent = 'Processing...';
+        } else if (hasSelectedFiles) {
             dom.processBtnText.textContent = `Optimize ${selectedFiles.size} Selected`;
-        } else if (appStatus === 'done' || appStatus === 'error') {
-            const remaining = pendingFiles.filter(f => f.status === 'pending').length;
-            dom.processBtnText.textContent = remaining > 0 ? `Optimize ${remaining} Remaining` : 'Optimize';
+        } else if (hasPendingFiles) {
+            const pendingCount = pendingFiles.filter(f => f.status === 'pending').length;
+            dom.processBtnText.textContent = `Optimize ${pendingCount} Pending`;
         } else {
-            dom.processBtnText.textContent = 'Optimize All';
+            dom.processBtnText.textContent = 'Optimize'; // Default text, will be disabled
         }
 
         // Show/hide progress bar vs text
         dom.progressContainer.style.opacity = isProcessing ? '1' : '0';
         dom.processBtnText.style.opacity = isProcessing ? '0' : '1';
         
+        // *** MODIFIED LOGIC ***
         // Set button disabled state
-        dom.processBtn.disabled = (!hasPendingFiles && !isProcessing) || isProcessing;
+        dom.processBtn.disabled = !canProcess || isProcessing;
     }
 
     /**
@@ -521,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="text-sm text-green-700 dark:text-green-400 font-medium mb-2 flex items-center justify-center">
                         <i data-lucide="file-check" class="w-5 h-5 mr-1.5"></i>
                         ${processedFiles.length} file(s) optimized!
-                     </p>
+                        </p>
                     <a
                         id="download-btn"
                         href="#" 
@@ -558,13 +641,16 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     async function handleProcess() {
         const filesToProcess = state.selectedFiles.size > 0
-            ? state.pendingFiles.filter(f => state.selectedFiles.has(f.id))
+            ? state.pendingFiles.filter(f => state.selectedFiles.has(f.id) && f.status !== 'processing') // Allow re-processing 'done' files
             : state.pendingFiles.filter(f => f.status === 'pending'); // Process all pending
 
         if (filesToProcess.length === 0) {
             setAppStatus('error', "No files to process. Select files or clear completed.");
             return;
         }
+        
+        // *** NEW: Clear previous results to create a new download batch ***
+        state.processedFiles = [];
         
         setAppStatus('processing');
         
@@ -642,9 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <i data-lucide="loader-2" class="w-5 h-5 mr-2 animate-spin"></i>
             ${isZip ? 'Zipping...' : 'Preparing...'}
         `;
-        if (window.lucide) {
-            lucide.createIcons(); // Re-init spinner icon
-        }
+        if (window.lucide) window.lucide.createIcons(); // Re-init spinner icon
         link.classList.add('opacity-75', 'cursor-wait');
 
         try {
@@ -686,15 +770,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i data-lucide="download" class="w-5 h-5 mr-2"></i>
                 Download ${downloadText}
             `;
-            if (window.lucide) {
-                lucide.createIcons();
-            }
+            if (window.lucide) window.lucide.createIcons();
             link.classList.remove('opacity-75', 'cursor-wait');
 
         } catch (err) {
-             setAppStatus("error", "Failed to generate download.");
-             console.error("Download failed:", err);
-             // Reset button (it will be re-rendered by setAppStatus)
+                setAppStatus("error", "Failed to generate download.");
+                console.error("Download failed:", err);
+                // Reset button (it will be re-rendered by setAppStatus)
         }
     }
 
@@ -848,10 +930,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ease: 'power1.out' 
             });
         });
+        
     }
 
     // --- Initialization ---
-    function initialize() {
+    const initialize = () => {
         // --- Load Libraries ---
         if (window.JSZip) state.isJsZipLoaded = true;
         if (window.gsap) {
@@ -865,6 +948,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTheme = localStorage.getItem('theme') || 'light';
         updateThemeToggleState(currentTheme);
         
+        // --- Create debounced version of the size estimator ---
+        const debouncedUpdateEstimatedSize = debounce(updateEstimatedSize, 250);
+
         // --- Event Listeners ---
         dom.browseBtn.addEventListener('click', () => {
             dom.fileInput.value = null; // <-- THE FIX
@@ -887,14 +973,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Settings
         dom.qualitySlider.addEventListener('input', (e) => {
             dom.qualityValue.textContent = parseFloat(e.target.value).toFixed(2);
+            debouncedUpdateEstimatedSize(); // Update estimate on slide
         });
         dom.formatSelect.addEventListener('change', () => {
             const isPNG = dom.formatSelect.value === 'png';
             dom.qualitySlider.disabled = isPNG;
             dom.qualityValue.textContent = isPNG ? 'N/A' : parseFloat(dom.qualitySlider.value).toFixed(2);
             dom.qualitySlider.style.opacity = isPNG ? 0.5 : 1;
+            debouncedUpdateEstimatedSize(); // Update estimate on format change
         });
         
+        // NEW: Listen to resize inputs for estimation
+        dom.widthInput.addEventListener('input', debouncedUpdateEstimatedSize);
+        dom.heightInput.addEventListener('input', debouncedUpdateEstimatedSize);
+
         // Main action button
         dom.processBtn.addEventListener('click', handleProcess);
         
@@ -906,7 +998,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Initial Render ---
         render();
-    }
+        updateEstimatedSize(); // Run initial estimate on load
+    };
 
     // Run the app!
     initialize();
