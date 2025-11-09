@@ -18,13 +18,12 @@
     <!-- 4. GSAP (for animations) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-    <!-- 5. Link to new CSS file -->
+    <!-- 5. Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 
     <!-- 
       Tailwind Configuration
-      We use this to set up dark mode, custom fonts, and disable 
-      the preflight 'ring' styles that interfere with the checkboxes.
+      (Must stay in HTML head to configure Tailwind before it runs)
     -->
     <script>
         tailwind.config = {
@@ -35,6 +34,12 @@
                         sans: ['Montserrat', 'sans-serif'],
                         display: ['Poppins', 'sans-serif'],
                     },
+                    // --- ADDED CUSTOM COLORS ---
+                    colors: {
+                        primary: '#FA6400',
+                        secondary: '#163554',
+                    }
+                    // --- END ADD ---
                 },
             },
             corePlugins: {
@@ -49,7 +54,7 @@
     
     <!--
       Theme Loader Script:
-      This runs *before* the page loads to prevent "flash of wrong theme" (FOUT).
+      (Must stay in HTML head to prevent "flash of wrong theme")
     -->
     <script>
         try {
@@ -70,16 +75,23 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4 sm:p-8 font-sans">
 
+    <!-- Mesh Gradient Background -->
+    <div class="gradient-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    <div class="noise-overlay"></div>
+
     <!-- Main Application Card -->
-    <div class="max-w-4xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+    <div class="max-w-4xl w-full rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
         
         <!-- Left Panel: Upload & File List -->
-        <div class="w-full md:w-1/2 p-6 md:p-8 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <div class="w-full md:w-1/2 p-6 md:p-8 border-r border-gray-200/50 dark:border-gray-700/50 flex flex-col bg-white dark:bg-gray-800 relative z-10">
             <!-- Header with Theme Toggle -->
             <div class="flex justify-between items-center mb-1">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-display">Image Optimizer</h1>
                 
-                <!-- Theme Toggle Button -->
+                <!-- Theme Toggle Button (Unchanged as requested) -->
                 <button
                     role="switch"
                     aria-checked="false"
@@ -120,7 +132,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">Compress, resize, and convert your images instantly.</p>
 
             <!-- Dropzone -->
-            <form id="dropzone" class="relative flex flex-col items-center justify-center w-full h-48 border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center cursor-pointer transition-colors duration-200 hover:border-blue-500 hover:bg-gray-50 dark:hover:border-blue-400 dark:hover:bg-gray-700">
+            <form id="dropzone" class="relative flex flex-col items-center justify-center w-full h-48 border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center cursor-pointer transition-colors duration-200 hover:border-primary hover:bg-gray-50 dark:hover:border-primary/80 dark:hover:bg-gray-700/50">
                 <div class="flex flex-col items-center justify-center pt-5 pb-6">
                     <i data-lucide="upload-cloud" class="w-10 h-10 mb-3 text-gray-400 dark:text-gray-500"></i>
                     <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Drag & drop</span> images here</p>
@@ -152,14 +164,14 @@
         </div>
 
         <!-- Right Panel: Settings & Download -->
-        <div class="w-full md:w-1/2 p-6 md:p-8 bg-gray-50 dark:bg-gray-700/60 flex flex-col justify-between">
+        <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between glass-panel relative z-10">
             <div>
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 font-display">Optimization Settings</h2>
                 
                 <!-- Format Setting -->
                 <div class="mb-4">
                     <label for="format" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Convert to Format</label>
-                    <select id="format" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400 dark:focus:border-blue-400">
+                    <select id="format" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-primary/80 dark:focus:border-primary/80">
                         <option value="webp" selected>WebP (Recommended)</option>
                         <option value="jpeg">JPEG</option>
                         <option value="png">PNG (Lossless)</option>
@@ -173,21 +185,21 @@
                         <div class="flex items-center space-x-2">
                             <!-- NEW: Estimated size output -->
                             <span id="estimated-size" class="text-sm font-medium text-gray-500 dark:text-gray-400" title="Estimated output size based on current settings and a sample image.">~ 0 KB</span>
-                            <span id="quality-value" class="text-sm font-medium text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full dark:bg-gray-500 dark:text-white">0.80</span>
+                            <span id="quality-value" class="text-sm font-medium text-gray-900 bg-gray-300 px-2 py-0.5 rounded-full dark:bg-gray-600 dark:text-white">0.80</span>
                         </div>
                     </div>
-                    <input id="quality" type="range" min="0.1" max="1.0" step="0.05" value="0.8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-600 disabled:opacity-50">
+                    <input id="quality" type="range" min="0.1" max="1.0" step="0.05" value="0.8" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-400 disabled:opacity-50 text-primary focus:ring-primary accent-primary">
                 </div>
 
                 <!-- Resize Settings -->
                 <div class="flex gap-4 mb-4">
                     <div class="w-1/2">
                         <label for="width" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Width (px)</label>
-                        <input type="number" id="width" min="1" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400 dark:focus:border-blue-400" placeholder="Auto">
+                        <input type="number" id="width" min="1" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-primary/80 dark:focus:border-primary/80" placeholder="Auto">
                     </div>
                     <div class="w-1/2">
                         <label for="height" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Height (px)</label>
-                        <input type="number" id="height" min="1" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-blue-400 dark:focus:border-blue-400" placeholder="Auto">
+                        <input type="number" id="height" min="1" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:focus:ring-primary/80 dark:focus:border-primary/80" placeholder="Auto">
                     </div>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2 mb-4">Leave one blank to maintain aspect ratio. Leave both blank to keep original size.</p>
@@ -197,12 +209,12 @@
             <!-- Action Area: Process Button & Download -->
             <div class="mt-8" id="action-area">
                 <!-- Process Button -->
-                <button id="process-btn" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-500 relative overflow-hidden" disabled>
+                <button id="process-btn" class="w-full bg-primary text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-500 relative overflow-hidden" disabled>
                     <span id="process-btn-text" class="transition-opacity duration-300">Optimize All</span>
                     
                     <!-- Progress Bar Container -->
-                    <div id="progress-container" class="absolute inset-0 bg-blue-800 flex items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
-                        <div id="progress-bar" class="absolute left-0 top-0 bottom-0 bg-blue-500 transition-all duration-300 ease-linear" style="width: 0%;"></div>
+                    <div id="progress-container" class="absolute inset-0 bg-secondary flex items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
+                        <div id="progress-bar" class="absolute left-0 top-0 bottom-0 bg-primary/70 transition-all duration-300 ease-linear" style="width: 0%;"></div>
                         <span id="progress-text" class="relative z-10 text-sm font-medium">0%</span>
                     </div>
                 </button>
