@@ -228,8 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     status: 'pending',
                 });
             } catch (err) {
-                console.error("Could not load image preview:", file.name, err);
-                setAppStatus('error', `Could not load preview for ${file.name}. File might be corrupted.`);
+                console.error("Error loading image dimensions:", err);
+                // Optionally add file with error state
             }
         }
         render();
@@ -370,8 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const { blob: estimatedBlob } = await processImage(sampleFile.file, settings);
             
             if (sampleFile.size === 0) { // Avoid divide by zero
-                    dom.estimatedSize.textContent = '~ 0 KB';
-                    return;
+                 dom.estimatedSize.textContent = '~ 0 KB';
+                 return;
             }
 
             const compressionRatio = estimatedBlob.size / sampleFile.size;
@@ -419,10 +419,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const item = document.createElement('div');
             item.id = file.id;
-            item.className = `flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/80 rounded-lg transition-all duration-200
-                                ${file.status === 'error' ? 'bg-red-50 dark:bg-red-900/30' : ''}
-                                ${isSelected ? 'ring-2 ring-blue-500' : ''}
-                                cursor-pointer`;
+            item.className = `flex items-center justify-between p-3 bg-gray-50/70 dark:bg-gray-700/60 rounded-lg transition-all duration-200
+                                     ${file.status === 'error' ? 'bg-red-50 dark:bg-red-900/30' : ''}
+                                     ${isSelected ? 'ring-2 ring-primary' : ''}
+                                     cursor-pointer`;
             
             // Add click event for selection
             item.dataset.action = 'toggle-select';
@@ -432,13 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flex items-center overflow-hidden">
                     <input
                         type="checkbox"
-                        class="h-4 w-4 rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-0 focus:ring-offset-0 disabled:opacity-50 pointer-events-none mr-3"
+                        class="h-4 w-4 rounded border-gray-300 dark:border-gray-500 text-primary focus:ring-0 focus:ring-offset-0 disabled:opacity-50 pointer-events-none mr-3"
                         ${isSelected ? 'checked' : ''}
                     >
                     <div class="relative w-10 h-10 object-cover rounded flex-shrink-0 bg-gray-200 dark:bg-gray-600">
                         <img src="${file.previewUrl}" alt="${file.name} preview" class="w-full h-full object-cover rounded">
                         ${file.status === 'processing' ? '<div class="absolute inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center rounded"></div>' : ''}
-                        ${file.status === 'done' ? '<div class="absolute inset-0 bg-green-500/30 dark:bg-green-700/50 flex items-center justify-center rounded"></div>' : ''}
+                        ${file.status === 'done' ? '<div class="absolute inset-0 bg-secondary/30 dark:bg-secondary/50 flex items-center justify-center rounded"></div>' : ''}
                     </div>
                     <div class="ml-3 overflow-hidden">
                         <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate" title="${file.name}">
@@ -472,12 +472,12 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'processing':
                 return `
                     <div class="p-1" title="Processing...">
-                        <i data-lucide="loader-2" class="w-5 h-5 text-blue-500 animate-spin"></i>
+                        <i data-lucide="loader-2" class="w-5 h-5 text-primary animate-spin"></i>
                     </div>`;
             case 'done':
                 return `
                     <div class="p-1" title="Completed">
-                        <i data-lucide="file-check" class="w-5 h-5 text-green-500"></i>
+                        <i data-lucide="file-check" class="w-5 h-5 text-secondary"></i>
                     </div>`;
             case 'error':
                 return `
@@ -501,11 +501,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hasAny) {
             controlsHTML += `
                 <button type="button" title="Select All" data-action="select-all"
-                        class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+                        class="text-sm text-primary hover:text-primary/80 dark:text-primary/80 dark:hover:text-primary font-medium">
                     <i data-lucide="check-square" class="w-5 h-5"></i>
                 </button>
                 <button type="button" title="Clear Selection" data-action="clear-selection"
-                        class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium ${state.selectedFiles.size === 0 ? 'disabled:text-gray-400 cursor-not-allowed' : ''}"
+                        class="text-sm text-primary hover:text-primary/80 dark:text-primary/80 dark:hover:text-primary font-medium ${state.selectedFiles.size === 0 ? 'disabled:text-gray-400 cursor-not-allowed' : ''}"
                         ${state.selectedFiles.size === 0 ? 'disabled' : ''}>
                     <i data-lucide="square" class="w-5 h-5"></i>
                 </button>`;
@@ -601,15 +601,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             html += `
                 <div class="mt-4 text-center">
-                    <p class="text-sm text-green-700 dark:text-green-400 font-medium mb-2 flex items-center justify-center">
+                    <p class="text-sm text-secondary dark:text-blue-300 font-medium mb-2 flex items-center justify-center">
                         <i data-lucide="file-check" class="w-5 h-5 mr-1.5"></i>
                         ${processedFiles.length} file(s) optimized!
-                        </p>
+                     </p>
                     <a
                         id="download-btn"
                         href="#" 
                         download="${downloadName}"
-                        class="w-full bg-green-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+                        class="w-full bg-secondary text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center hover:bg-secondary/90 transition-colors"
                     >
                         <i data-lucide="download" class="w-5 h-5 mr-2"></i>
                         Download ${downloadText}
@@ -728,7 +728,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <i data-lucide="loader-2" class="w-5 h-5 mr-2 animate-spin"></i>
             ${isZip ? 'Zipping...' : 'Preparing...'}
         `;
-        if (window.lucide) window.lucide.createIcons(); // Re-init spinner icon
+        if (window.lucide) {
+            window.lucide.createIcons(); // Re-init spinner icon
+        }
         link.classList.add('opacity-75', 'cursor-wait');
 
         try {
@@ -770,13 +772,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i data-lucide="download" class="w-5 h-5 mr-2"></i>
                 Download ${downloadText}
             `;
-            if (window.lucide) window.lucide.createIcons();
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
             link.classList.remove('opacity-75', 'cursor-wait');
 
         } catch (err) {
-                setAppStatus("error", "Failed to generate download.");
-                console.error("Download failed:", err);
-                // Reset button (it will be re-rendered by setAppStatus)
+             setAppStatus("error", "Failed to generate download.");
+             console.error("Download failed:", err);
+             // Reset button (it will be re-rendered by setAppStatus)
         }
     }
 
@@ -931,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
+        // --- REMOVED STRAY CODE FROM HERE ---
     }
 
     // --- Initialization ---
