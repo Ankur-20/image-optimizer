@@ -1,51 +1,131 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
 
-/* Apply fonts */
+/* Apply fonts via Tailwind config (using body/h1 as fallbacks) */
 body {
     font-family: 'Montserrat', sans-serif;
+    background-color: #f3f4f6; /* Light BG Fallback */
+}
+.dark body {
+     background-color: #111827; /* Dark BG Fallback */
 }
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
 }
 
 /* Custom scrollbar for the file list */
-/* Note: Converted Tailwind @apply directives to plain CSS */
 .file-list-container::-webkit-scrollbar {
     width: 6px;
 }
 .file-list-container::-webkit-scrollbar-track {
-    background-color: #f3f4f6; /* bg-gray-100 */
-    border-radius: 9999px; /* rounded-full */
+    @apply bg-gray-100 dark:bg-gray-700 rounded-full;
 }
 .file-list-container::-webkit-scrollbar-thumb {
-    background-color: #d1d5db; /* bg-gray-300 */
-    border-radius: 9999px; /* rounded-full */
+    @apply bg-gray-300 dark:bg-gray-500 rounded-full;
 }
 .file-list-container::-webkit-scrollbar-thumb:hover {
-    background-color: #9ca3af; /* bg-gray-400 */
-}
-
-/* Dark mode scrollbar */
-.dark .file-list-container::-webkit-scrollbar-track {
-    background-color: #374151; /* dark:bg-gray-700 */
-}
-.dark .file-list-container::-webkit-scrollbar-thumb {
-    background-color: #6b7280; /* dark:bg-gray-500 */
-}
-.dark .file-list-container::-webkit-scrollbar-thumb:hover {
-    background-color: #9ca3af; /* dark:bg-gray-400 */
+    @apply bg-gray-400 dark:bg-gray-400;
 }
 
 /* Custom Checkbox */
 input[type="checkbox"]:focus {
-    --tw-ring-offset-shadow: none;
-    --tw-ring-shadow: none;
-    box-shadow: none;
-    outline: none;
+    @apply focus:ring-0 focus:ring-offset-0;
 }
 
 /* Tweak for range input in dark mode */
 .dark input[type="range"]::-webkit-slider-thumb {
     background: #D1D5DB; /* gray-300 */
+}
+
+/* --- New UI Styles --- */
+
+/* 1. Gradient Blobs (position absolute inside card) */
+.gradient-blobs {
+    position: fixed; /* MODIFIED: was absolute */
+    inset: 0;
+    z-index: 0;
+    /* MODIFIED: removed overflow: hidden; */
+}
+
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.4;
+}
+.dark .blob {
+    opacity: 0.35;
+}
+
+
+.blob-1 {
+    width: 400px;
+    height: 400px;
+    background: #FA6400; /* primary */
+    top: -50px;
+    left: -100px;
+    animation: blob-move-1 12s infinite alternate ease-in-out;
+}
+
+
+.blob-2 {
+    width: 350px;
+    height: 350px;
+    background: #FFB800; /* New Orange/Yellow */
+    bottom: -50px;
+    right: -100px;
+    animation: blob-move-2 15s infinite alternate ease-in-out;
+}
+
+/* 2. Noise Overlay (position absolute inside card) */
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Sits with blobs */
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+DQogIDxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSJ0cmFuc3BhcmVudCIgLz4NCiAgPGZpbHRlciBpZD0ibnMiPg0KICAgIDxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjciIG51bU9jdGF2ZXM9IjIiIHN0aXRjaFRpbGVzPSJzdGl0Y2giIC8+DQogIDwvZmlsdGVyPg0KICA8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iIzgwODA4MCIgb3BhY2l0eT0iMC4xIiBmaWx0ZXI9InVybCgjbnMpIiAvPg0KPC9zdmc+');
+    opacity: 0.15;
+}
+.dark .noise-overlay {
+    opacity: 0.05;
+}
+
+/* 3. Glassmorphism Panel (Right Side) */
+.glass-panel {
+    /* Light Mode */
+    background-color: rgba(255, 255, 255, 0.4);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    
+    /* Shared */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-panel {
+    /* Dark Mode */
+    background-color: rgba(31, 41, 55, 0.4); /* dark:bg-gray-800 with alpha */
+    border-left: 1px solid rgba(75, 85, 99, 0.2); /* dark:border-gray-600 with alpha */
+}
+
+/* 4. Animation Keyframes */
+
+@keyframes blob-move-1 {
+    from {
+        transform: translate(0, -20px) scale(1.1); /* Start top-left */
+    }
+    to {
+        transform: translate(-40px, 300px) scale(1.3); /* End bottom-left */
+    }
+}
+
+
+@keyframes blob-move-2 {
+    from {
+        transform: translate(-20px, 0) scale(1.1); /* Start bottom-right */
+    }
+    to {
+        transform: translate(40px, -300px) scale(1.3); /* End top-right */
+    }
 }
