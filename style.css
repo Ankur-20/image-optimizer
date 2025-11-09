@@ -1,7 +1,7 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
 
-/* Apply fonts via Tailwind config (using body/h1 as fallbacks) */
+/* Apply fonts */
 body {
     font-family: 'Montserrat', sans-serif;
 }
@@ -10,42 +10,39 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Custom scrollbar for the file list */
+/* Note: Converted Tailwind @apply directives to plain CSS */
 .file-list-container::-webkit-scrollbar {
     width: 6px;
 }
 .file-list-container::-webkit-scrollbar-track {
-    /* @apply bg-gray-100 dark:bg-gray-700 rounded-full; */
-    background-color: #f3f4f6;
-    border-radius: 9999px;
+    background-color: #f3f4f6; /* bg-gray-100 */
+    border-radius: 9999px; /* rounded-full */
 }
-.dark .file-list-container::-webkit-scrollbar-track {
-    background-color: #374151;
+.file-list-container::-webkit-scrollbar-thumb {
+    background-color: #d1d5db; /* bg-gray-300 */
+    border-radius: 9999px; /* rounded-full */
+}
+.file-list-container::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af; /* bg-gray-400 */
 }
 
-.file-list-container::-webkit-scrollbar-thumb {
-    /* @apply bg-gray-300 dark:bg-gray-500 rounded-full; */
-    background-color: #d1d5db;
-    border-radius: 9999px;
+/* Dark mode scrollbar */
+.dark .file-list-container::-webkit-scrollbar-track {
+    background-color: #374151; /* dark:bg-gray-700 */
 }
 .dark .file-list-container::-webkit-scrollbar-thumb {
-    background-color: #6b7280;
-}
-
-.file-list-container::-webkit-scrollbar-thumb:hover {
-    /* @apply bg-gray-400 dark:bg-gray-400; */
-    background-color: #9ca3af;
+    background-color: #6b7280; /* dark:bg-gray-500 */
 }
 .dark .file-list-container::-webkit-scrollbar-thumb:hover {
-    background-color: #9ca3af;
+    background-color: #9ca3af; /* dark:bg-gray-400 */
 }
 
-/* Custom Checkbox 
-  Replaces: @apply focus:ring-0 focus:ring-offset-0;
-  This is to override browser defaults, especially since the
-  Tailwind config disables ring plugins.
-*/
+/* Custom Checkbox */
 input[type="checkbox"]:focus {
+    --tw-ring-offset-shadow: none;
+    --tw-ring-shadow: none;
     box-shadow: none;
+    outline: none;
 }
 
 /* Tweak for range input in dark mode */
