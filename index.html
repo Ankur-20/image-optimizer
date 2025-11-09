@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!-- Set default light mode, script will check localStorage -->
-<html lang="en" class="light"> 
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FindLaw Image Optimizer</title>
+    <title>Modern Image Optimizer</title>
     
     <!-- 1. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,7 @@
     <!-- 4. GSAP (for animations) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-    <!-- 5. Custom Stylesheet -->
+    <!-- 5. Link to new CSS file -->
     <link rel="stylesheet" href="style.css">
 
     <!-- 
@@ -170,7 +170,11 @@
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-1">
                         <label for="quality" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quality</label>
-                        <span id="quality-value" class="text-sm font-medium text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full dark:bg-gray-500 dark:text-white">0.80</span>
+                        <div class="flex items-center space-x-2">
+                            <!-- NEW: Estimated size output -->
+                            <span id="estimated-size" class="text-sm font-medium text-gray-500 dark:text-gray-400" title="Estimated output size based on current settings and a sample image.">~ 0 KB</span>
+                            <span id="quality-value" class="text-sm font-medium text-gray-900 bg-gray-200 px-2 py-0.5 rounded-full dark:bg-gray-500 dark:text-white">0.80</span>
+                        </div>
                     </div>
                     <input id="quality" type="range" min="0.1" max="1.0" step="0.05" value="0.8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-600 disabled:opacity-50">
                 </div>
